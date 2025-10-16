@@ -21,7 +21,7 @@ class User {
             VALUES ($1, $2, $3, $4)
             RETURNING *
             `;
-        const hashedPassword = await bcrypt.hash(password)
+        const hashedPassword = await bcrypt.hash(password, 10)
         const result = await pool.query(query, [
             email,
             hashedPassword,
