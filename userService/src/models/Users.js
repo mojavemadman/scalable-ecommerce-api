@@ -1,7 +1,19 @@
-import pool from "..db/db.js"
+import pool from "../db/db.js"
 import bcrypt from "bcrypt";
 
-class User {
+class Users {
+
+    static async findAllUsers() {
+        const query = `
+            SELECT
+                id, email, first_name, last_name, phone, shipping_street, shipping_city,
+                shipping_state, shipping_zip, shipping_country, is_admin, created_at, last_login
+            FROM users
+            ORDER BY created_at
+        `;
+        const result = await pool.query(query);
+        return result.rows;
+    }
 
     static async findById(userId) {
         const query = `SELECT * FROM users WHERE id = $1`;
@@ -49,4 +61,4 @@ class User {
     }
 }
 
-export default User
+export default Users
