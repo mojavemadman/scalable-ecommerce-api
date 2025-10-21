@@ -5,7 +5,8 @@ import jwt from "jsonwebtoken";
 import { authentication, isAdmin } from "../middleware/auth.js";
 
 const usersRouter = Router();
-
+//TODO: add delete
+ 
 //Create user profile
 usersRouter.post("/", async (req, res) => {
     try {
@@ -39,6 +40,7 @@ usersRouter.post("/login", async(req, res) => {
         const payload = {
             userId: user.id,
             email: user.email,
+            isAdmin: user.is_admin
         }
         const token = jwt.sign(payload, process.env.JWT_SECRET_KEY, {expiresIn: "12h"});
         res.cookie("login_token", token, { httpOnly: true, secure: true, expires: new Date(Date.now() + 12 * 60 * 60 * 1000) })
