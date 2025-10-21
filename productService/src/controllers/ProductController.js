@@ -47,7 +47,7 @@ class ProductController {
         const status = req.query.status
         try {
             
-            const products = await Product.findbyActive(status);
+            const products = await Product.findByActive(status);
 
             if (!products) {
                 return res.status(404).send({ error: "Products not found"});

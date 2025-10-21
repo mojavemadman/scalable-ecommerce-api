@@ -18,7 +18,7 @@ class Cart {
         const result = await pool.query(query, [userId]);
         const rows = result.rows;
 
-        if (rows.legth === 0 || !rows[0].cart_id) {
+        if (rows.length === 0 || !rows[0].cart_id) {
             return null;
         }
 
@@ -42,12 +42,7 @@ class Cart {
         return result.rows[0];
     }
 
-    /*
-    This function will be used for the PUT and POST route
-    TBD:Is there ever a use case where we add multiple items at once?
-    If so, can we do that in one database query?
-    */
-    static async addOrUpdateItem(userId, productId, quantity) {
+    static async addItem(userId, productId, quantity) {
         const cartQuery = `SELECT id FROM carts WHERE user_id = $1`
         let cartResult = (await pool.query(cartQuery, [userId])).rows[0];
 
@@ -56,21 +51,53 @@ class Cart {
         }
 
         const cartId = cartResult.id
-
-        const itemQuery = `
-            INSERT INTO cart_items (cart_id, product_id, quantity) 
+        const query = `
+            INSERT INTO cart_items (cart_id, product_id, quantity)
             VALUES ($1, $2, $3)
             ON CONFLICT (cart_id, product_id)
             DO UPDATE SET quantity = cart_items.quantity + $3
             RETURNING *
+        `
+        const result = await pool.query(query, [cartId, productId, quantity]);
+        return result.rows[0]
+        
+    }
+    
+    /*
+    TBD:Is there ever a use case where we add multiple items at once?
+    If so, can we do that in one database query?
+    */
+    static async updateItemQuantity(userId, productId, newQuantity) {
+        const cartQuery = `SELECT id FROM carts WHERE user_id = $1`
+        let cartResult = (await pool.query(cartQuery, [userId])).rows[0];
+
+        if (!cartResult) return null
+
+        const cartId = cartResult.id
+
+        if (newQuantity <= 0) {
+            const deleteQuery = `
+                DELETE FROM cart_items
+                WHERE cart_id = $1 AND product_id = $2 
+                RETURNING *
+            `;
+            const result = await pool.query(deleteQuery, [cartId, productId])
+            return { deleted: true, item: result.rows[0] };
+        }
+
+        const itemQuery = `
+            UPDATE cart_items 
+            SET quantity = $3
+            WHERE cart_id = $1 AND product_id = $2
+            RETURNING *
         `;
-        const itemResult = await pool.query(itemQuery, [cartId, productId, quantity]);
+        const itemResult = await pool.query(itemQuery, [cartId, productId, newQuantity]);
         return itemResult.rows[0];
     }
 
     static async deleteItem(userId, productId) {
         const cartQuery = `SELECT id FROM carts WHERE user_id = $1`
-        let cartResult = await pool.query(cartQuery, [userId]);
+        const cartResult = await pool.query(cartQuery, [userId]);
 
         if (cartResult.rows.length === 0) return false
 
@@ -99,3 +126,5 @@ class Cart {
     }
 
 }
+
+export default Cart

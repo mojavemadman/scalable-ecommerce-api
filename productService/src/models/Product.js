@@ -23,7 +23,7 @@ class Product {
         return result.rows;
     }
 
-    static async findbyActive(status) {
+    static async findByActive(status) {
         const query = `
             SELECT * 
             FROM products 
