@@ -1,0 +1,118 @@
+import express from "express"
+import dotenv from "dotenv"
+import morgan from "morgan"
+
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 8080;
+
+const USER_SERVICE = process.env.USER_SERVICE_URL;
+const PRODUCT_SERVICE = process.env.PRODUCT_SERVICE_URL;
+const CART_SERVICE  = process.env.CART_SERVICE_URL;
+
+app.use(express.json());
+app.use(morgan("dev"));
+
+//Helper function that proxies requests
+const proxyRequest = async (req, res, targetUrl) => {
+    try {
+        // Remove /api/ to forward route expected by service
+        const path = req.url.replace(/^\/api/, '');;
+        const url = `${targetUrl}${path}`;
+
+        const options = {
+            method: req.method,
+            headers: {
+                "Content-Type": "application/json",
+            }
+        };
+
+        //Need to add body for non-GET requests
+        if (["POST", "PUT", "PATCH", "DELETE"].includes(req.method) && req.body) {
+            options.body = JSON.stringify(req.body)
+        }
+
+        const response = await fetch(url, options);
+        const data = await response.text();
+
+        res.status(response.status);
+
+        //Forward response headers
+        response.headers.forEach((value, key) => {
+            res.setHeader(key, value);
+        });
+
+        //Send response
+        try {
+            res.json(JSON.parse(data));
+        } catch {
+            res.send(data);
+        }
+    } catch (error) {
+        console.error(`Error proxying to ${targetUrl}:`, error.message);
+        res.status(503).json({
+            error: "Service unavailable",
+            message: error.message
+        });
+    }
+};
+
+//====================PUBLIC ROUTES====================
+//User Service Public Routes
+app.post("/api/users", (req, res) => proxyRequest(req, res, USER_SERVICE));
+app.post("/api/users/login", (req, res) => proxyRequest(req, res, USER_SERVICE));
+app.get("/api/users/profile", (req, res) => proxyRequest(req, res, USER_SERVICE));
+
+//Product Service Public Routes
+app.get("/api/products", (req, res) => proxyRequest(req, res, PRODUCT_SERVICE));
+app.get("/api/products/active", (req, res) => proxyRequest(req, res, PRODUCT_SERVICE));
+app.get("/api/products/categories/:id", (req, res) => proxyRequest(req, res, PRODUCT_SERVICE));
+app.get("/api/products/:id", (req, res) => proxyRequest(req, res, PRODUCT_SERVICE));
+
+//Cart Service Public Routes (will need auth later)
+app.get("/api/cart", (req, res) => proxyRequest(req, res, CART_SERVICE));
+app.post("/api/cart/items", (req, res) => proxyRequest(req, res, CART_SERVICE));
+app.put("/api/cart/items", (req, res) => proxyRequest(req, res, CART_SERVICE));
+app.delete("/api/cart/items/:productId", (req, res) => proxyRequest(req, res, CART_SERVICE));
+app.delete("/api/cart", (req, res) => proxyRequest(req, res, CART_SERVICE));
+
+//TODO:Add auth middleware
+//====================ADMIN ROUTES====================
+
+//Product Service - Admin Routes
+app.post("/api/products", (req, res) => proxyRequest(req, res, PRODUCT_SERVICE));
+app.put("/api/products/:id", (req, res) => proxyRequest(req, res, PRODUCT_SERVICE));
+app.delete("/api/products/:id", (req, res) => proxyRequest(req, res, PRODUCT_SERVICE));
+
+
+//====================INTERNAL ROUTES (Blocked from public)====================
+//User Service internal routes (called directly between services)
+// - GET /api/users (list all users)
+// - GET /api/users/:id (get user by ID)
+
+//Health check
+app.get("/health", (req, res) => {
+    res.json({
+        status: "ok",
+        gateway: "running",
+        services: {
+            user: USER_SERVICE,
+            product: PRODUCT_SERVICE,
+            cart: CART_SERVICE
+        }
+    });
+});
+
+//404 Handler
+app.use((req,res) => {
+    res.status(404).json({ error: "Route not found" });
+});
+
+app.listen(PORT, () => {
+    console.log(`API Gateway running on http://localhost:${PORT}`);
+    console.log("Routing to:");
+    console.log(`  User Service: ${USER_SERVICE}`);
+    console.log(`  Product Service: ${PRODUCT_SERVICE}`);
+    console.log(`  Cart Service: ${CART_SERVICE}`);
+})

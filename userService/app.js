@@ -1,14 +1,12 @@
-import dotenv from "dotenv";
 import express from "express";
 import morgan from "morgan";
-import pool from "./db/db.js";
-import usersRouter from "./routes/users.js";
+import pool from "./src/db/db.js";
+import usersRouter from "./src/routes/user.js";
 
-dotenv.config();
 const app = express();
 
-app.use(morgan("dev"));
 app.use(express.json());
+app.use(morgan("dev"));
 app.use("/users", usersRouter);
 
 const testConnection = async () => {

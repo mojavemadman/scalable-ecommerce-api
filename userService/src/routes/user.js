@@ -96,3 +96,5 @@ usersRouter.get("/:id", async (req, res) => { //LIMIT TO INTERNAL USE
         res.status(400).send({ error: error.message });
     }
 })
+
+export default usersRouter;

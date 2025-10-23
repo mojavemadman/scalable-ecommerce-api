@@ -1,10 +1,8 @@
-import dotenv from "dotenv";
 import express from "express";
 import morgan from "morgan";
 import pool from "./src/db/db.js";
 import cartRouter from "./src/routes/cart.js";
 
-dotenv.config();
 const app = express();
 
 app.use(morgan("dev"));

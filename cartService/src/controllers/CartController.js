@@ -40,20 +40,28 @@ class CartController {
             const { userId } = req.user;
             const { productId, quantity } = req.body;
 
-            //TODO: Call Product Service and verify product exists, is active, and inventory >= quantity
-            fetch("http://localhost:3001/product/active")
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error("Error retrieving product information:", response.status )
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    const filteredProds = data.filter(rows => rows.productId === productId);
-                    if (filteredProds.length === 0) {
-                        
-                    }
-                })
+            if (!quantity || quantity <= 0) {
+                return res.status(400).send({ error: "Quantity must be greater than 0" });
+            }
+        
+            const productResponse = await fetch(`http://localhost:3001/products/${productId}`);
+            
+            if (!productResponse.ok) {
+                if (productResponse.status === 404) {
+                    return res.status(404).send({ error: "Product not found" });
+                }
+                throw new Error(`Product service error: ${productResponse.status}`);
+            }
+            
+            const product = await productResponse.json();
+            
+            if (!product.is_active) {
+                return res.status(400).send({ error: "Product is not active" });
+            }
+            
+            if (product.inventory < quantity) {
+                return res.status(400).send({ error: "Insufficient inventory" });
+            }
 
             const newItem = await Cart.addItem(userId, productId, quantity);
 

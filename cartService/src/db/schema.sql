@@ -1,4 +1,4 @@
-CREATE DATABASE cart_db;
+CREATE DATABASE carts_db;
 
 CREATE TABLE carts (
     id SERIAL PRIMARY KEY,
