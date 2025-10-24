@@ -4,7 +4,7 @@ class CartController {
 
     static async retrieveCart(req, res) {
         try {
-            const { userId } = req.user;
+            const userId = req.headers["x-user-id"];
             const cart = await Cart.getCart(userId);
 
             if (!cart) {
@@ -20,7 +20,7 @@ class CartController {
 
     static async updateItemQuantity(req, res) {
         try {
-            const { userId } = req.user;
+            const userId = req.headers["x-user-id"];
             const { productId, quantity } = req.body;
             const modifiedItem = await Cart.updateItemQuantity(userId, productId, quantity);
 
@@ -37,7 +37,7 @@ class CartController {
 
     static async addItem(req, res) {
         try {
-            const { userId } = req.user;
+            const userId = req.headers["x-user-id"];
             const { productId, quantity } = req.body;
 
             if (!quantity || quantity <= 0) {
@@ -78,7 +78,7 @@ class CartController {
 
     static async deleteItem(req, res) {
         try {
-            const { userId } = req.user;
+            const userId = req.headers["x-user-id"];
             const { productId } = req.params;
             const deletedItem = await Cart.deleteItem(userId, productId);
 
@@ -95,7 +95,7 @@ class CartController {
 
     static async clearCart(req, res) {
         try {
-            const { userId } = req.user;
+            const userId = req.headers["x-user-id"];
             const clearedCart = await Cart.clearCart(userId)
 
             if (!clearedCart) {

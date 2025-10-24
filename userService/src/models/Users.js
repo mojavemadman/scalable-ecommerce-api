@@ -66,7 +66,7 @@ class Users {
             WHERE id = $1
             RETURNING *
         `;
-        const hashedPassword =  await bcrypt.hash(updates.password, 10);
+        const hashedPassword =  updates.password ? await bcrypt.hash(updates.password, 10) : null;
         const result = await pool.query(query, [
             userId,
             updates.email,
@@ -76,9 +76,11 @@ class Users {
             updates.phone,
             updates.shippingStreet,
             updates.shippingCity,
+            updates.shippingState,
             updates.shippingZip,
             updates.shippingCountry
-        ])
+        ]);
+        return result.rows[0];
     }
 
     static async updateLastLogin(userId) {
