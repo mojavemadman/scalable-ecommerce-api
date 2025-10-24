@@ -41,7 +41,7 @@ const authenticateGateway = (req, res, next) => {
 const proxyRequest = async (req, res, targetUrl) => {
     try {
         // Remove /api/ to forward route expected by service
-        const path = req.url.replace(/^\/api/, '');;
+        const path = req.url.replace(/^\/api/, "");;
         const url = `${targetUrl}${path}`;
 
         const options = {
@@ -106,7 +106,24 @@ app.put("/api/cart/items", (req, res) => proxyRequest(req, res, CART_SERVICE));
 app.delete("/api/cart/items/:productId", (req, res) => proxyRequest(req, res, CART_SERVICE));
 app.delete("/api/cart", (req, res) => proxyRequest(req, res, CART_SERVICE));
 
-//TODO:Add auth middleware
+//====================AUTHENTICATED ROUTES====================
+// User Service - Authenticated routes
+app.get("/api/users/profile", authenticateGateway, (req, res) => proxyRequest(req, res, USER_SERVICE));
+app.delete("/api/users", authenticateGateway, (req, res) => proxyRequest(req, res, USER_SERVICE));
+app.get("/api/users", authenticateGateway, (req, res) => proxyRequest(req, res, USER_SERVICE)); // Admin only (service checks)
+
+// Cart Service - Authenticated routes
+app.get("/api/cart", authenticateGateway, (req, res) => proxyRequest(req, res, CART_SERVICE));
+app.post("/api/cart/items", authenticateGateway, (req, res) => proxyRequest(req, res, CART_SERVICE));
+app.put("/api/cart/items", authenticateGateway, (req, res) => proxyRequest(req, res, CART_SERVICE));
+app.delete("/api/cart/items/:productId", authenticateGateway, (req, res) => proxyRequest(req, res, CART_SERVICE));
+app.delete("/api/cart", authenticateGateway, (req, res) => proxyRequest(req, res, CART_SERVICE));
+
+// Product Service - Admin routes (admin checked at service)
+app.post("/api/products", authenticateGateway, (req, res) => proxyRequest(req, res, PRODUCT_SERVICE));
+app.put("/api/products/:id", authenticateGateway, (req, res) => proxyRequest(req, res, PRODUCT_SERVICE));
+app.delete("/api/products/:id", authenticateGateway, (req, res) => proxyRequest(req, res, PRODUCT_SERVICE));
+
 //====================ADMIN ROUTES====================
 
 //Product Service - Admin Routes
@@ -134,7 +151,7 @@ app.get("/health", (req, res) => {
 });
 
 //404 Handler
-app.use((req,res) => {
+app.use((req, res) => {
     res.status(404).json({ error: "Route not found" });
 });
 

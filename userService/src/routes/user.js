@@ -1,16 +1,21 @@
 import { Router } from "express";
 import UsersController from "../controllers/UsersController.js"
+import { isAdmin } from "../middleware/auth.js"
 
 const usersRouter = Router();
 
-//Create user profile
+//=======PUBLIC ROUTES=======
 usersRouter.post("/", UsersController.createUser);
-usersRouter.get("/", UsersController.getAllUsers);
-usersRouter.delete("/", UsersController.deleteUser)
 usersRouter.post("/login", UsersController.login);
+
+//=======AUTHENTICATED ROUTES=======
+usersRouter.delete("/", UsersController.deleteUser)
 usersRouter.get("/profile", UsersController.getProfile);
 
-//LIMIT TO INTERNAL USE
+//=======ADMIN ROUTES=======
+usersRouter.get("/", isAdmin, UsersController.getAllUsers);
+
+//=======INTERNAL ROUTES=======
 usersRouter.get("/:id", UsersController.getById);
 
 export default usersRouter;
