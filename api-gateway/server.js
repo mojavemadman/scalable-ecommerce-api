@@ -16,6 +16,8 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 const authenticateGateway = (req, res, next) => {
+    console.log("Authenticate Gateway called");
+    console.log("Request headers:", req.headers);
 	try {
 		let token;
 		const authHeader = req.headers.authorization;
@@ -91,20 +93,12 @@ const proxyRequest = async (req, res, targetUrl) => {
 //User Service Public Routes
 app.post("/api/users", (req, res) => proxyRequest(req, res, USER_SERVICE));
 app.post("/api/users/login", (req, res) => proxyRequest(req, res, USER_SERVICE));
-app.get("/api/users/profile", (req, res) => proxyRequest(req, res, USER_SERVICE));
 
 //Product Service Public Routes
 app.get("/api/products", (req, res) => proxyRequest(req, res, PRODUCT_SERVICE));
 app.get("/api/products/active", (req, res) => proxyRequest(req, res, PRODUCT_SERVICE));
 app.get("/api/products/categories/:id", (req, res) => proxyRequest(req, res, PRODUCT_SERVICE));
 app.get("/api/products/:id", (req, res) => proxyRequest(req, res, PRODUCT_SERVICE));
-
-//Cart Service Public Routes (will need auth later)
-app.get("/api/cart", (req, res) => proxyRequest(req, res, CART_SERVICE));
-app.post("/api/cart/items", (req, res) => proxyRequest(req, res, CART_SERVICE));
-app.put("/api/cart/items", (req, res) => proxyRequest(req, res, CART_SERVICE));
-app.delete("/api/cart/items/:productId", (req, res) => proxyRequest(req, res, CART_SERVICE));
-app.delete("/api/cart", (req, res) => proxyRequest(req, res, CART_SERVICE));
 
 //====================AUTHENTICATED ROUTES====================
 // User Service - Authenticated routes
@@ -118,11 +112,6 @@ app.post("/api/cart/items", authenticateGateway, (req, res) => proxyRequest(req,
 app.put("/api/cart/items", authenticateGateway, (req, res) => proxyRequest(req, res, CART_SERVICE));
 app.delete("/api/cart/items/:productId", authenticateGateway, (req, res) => proxyRequest(req, res, CART_SERVICE));
 app.delete("/api/cart", authenticateGateway, (req, res) => proxyRequest(req, res, CART_SERVICE));
-
-// Product Service - Admin routes (admin checked at service)
-app.post("/api/products", authenticateGateway, (req, res) => proxyRequest(req, res, PRODUCT_SERVICE));
-app.put("/api/products/:id", authenticateGateway, (req, res) => proxyRequest(req, res, PRODUCT_SERVICE));
-app.delete("/api/products/:id", authenticateGateway, (req, res) => proxyRequest(req, res, PRODUCT_SERVICE));
 
 //====================ADMIN ROUTES====================
 
