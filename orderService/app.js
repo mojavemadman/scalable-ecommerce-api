@@ -1,7 +1,7 @@
 import express from "express";
 import morgan from "morgan";
 import pool from "./src/db/db.js";
-import orderRouter from "./src/routes/orders.js";
+import orderRouter from "./src/routes/order.js";
 
 const app = express();
 
@@ -33,7 +33,7 @@ const startServer = async () => {
 	}
 
 	app.listen(3002, async () => {
-		console.log("Product server running on http://localhost:3001");
+		console.log("Product server running on http://localhost:3002");
 	});
 };
 

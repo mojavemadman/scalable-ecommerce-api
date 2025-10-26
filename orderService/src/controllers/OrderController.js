@@ -125,6 +125,147 @@ class OrderController {
             res.status(500).send({ error: error.message });
         }
     }
+
+    //Checkout flow -- Helper functions below
+    static async checkout(req, res) {
+        try {
+            const userId = req.headers["x-user-id"];
+            const { paymentInfo } = req.body;
+
+            const cart = await OrderController.getCartItems(userId);
+
+            if(!cart || cart.length === 0) {
+                return res.status(404).send({ error: "Cart not found" });
+            }
+
+            const validatedItems = await OrderController.validateCartItems(cart.items);
+            const totalAmount = await OrderController.calculateTotal(validatedItems);
+            
+            console.log(`Total amount: $${totalAmount.toFixed(2)}`);
+
+            const order = await OrderController.createPendingOrder(userId, validatedItems, totalAmount);
+            const payment = await OrderController.processPayment(order.id, totalAmount, paymentInfo);
+
+            await OrderController.finalizeOrder(order.id, cart.items);
+
+            res.status(201).json({ order, payment });
+        } catch (error) {
+            console.error("Checkout error:", error);
+            res.status(500).json({ error: error.message })
+        }
+    }
+
+    static async getCartItems(userId) {
+        try {
+            const response = await fetch(`${process.env.CART_SERVICE_URL}/cart`, {
+                headers: {
+                    'X-User-Id': userId
+                }
+            });
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error("Cart not found");
+                }
+                throw new Error(`Cart service error: ${response.status}`)
+            }
+            
+            const data = await response.json();
+            return data;
+
+        } catch (error) {
+            console.error("Error fetching cart:", error);
+            throw new Error(`Failed to get cart: ${error.message}`);
+        }
+    }
+
+    static async validateCartItems(items) {
+        try {
+            const validatedItems = [];
+
+            for (const item of items) {
+                const response = await fetch(
+                    `${process.env.PRODUCT_SERVICE_URL}/products/${item.productId}`
+                );
+
+                if (!response.ok) {
+                    throw new Error(`Product ${item.productId} not found`);
+                }
+
+                const product = await response.json();
+
+                if (!product.is_active) {
+                    throw new Error(`Product ${product.name} is no longer available`)
+                }
+
+                if (product.inventory < item.quantity) {
+                    throw new Error(
+                        `Not enough stock for "${product.name}". ` +
+                        `Requested: ${item.quantity}; Available: ${product.inventory}` 
+                    );
+                }
+
+                validatedItems.push({
+                    productId: product.id,
+                    quantity: item.quantity,
+                    price: product.price,
+                    name: product.name
+                });
+            }
+
+            console.log(`All ${items.length} items validated`);
+            return validatedItems;
+        } catch (error) {
+            console.error("Validation error:", error);
+            throw error;
+        }
+    }
+
+    static async calculateTotal(validatedItems) {
+        return validatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    }
+
+    static async createPendingOrder(userId, validatedItems, totalAmount) {
+        try {
+            //1. Create order (need userId, shippingInfo, totalAmount)
+            const response = await fetch(`${process.env.USER_SERVICE_URL}/users/profile`, {
+                headers: {
+                    "X-User-Id": userId
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error("User not found");
+            }
+
+            const user = await response.json();
+            const shippingInfo = {
+                street: user.shipping_street,
+                city: user.shipping_city,
+                state: user.shipping_state,
+                zip: user.shipping_zip
+            }
+
+            //2. Create order
+            const order = await Orders.createOrder(userId, shippingInfo, totalAmount);
+
+            if (!order) {
+                throw new Error("Error creating order");
+            }
+            
+            //3. Add validated items to order
+            for (const item of validatedItems) {
+                await Orders.addItemToOrder(order.id, item.productId, item.quantity, item.price)
+            }
+            console.log(`Order ${order.id} created with ${validatedItems.length} items`)
+            return order;
+        } catch (error) {
+            console.error("Error initializing order:", error);
+            throw error;
+        }
+    }
+
+    //TODO: CREATE PAYMENT HELPER
 }
 
 export default OrderController;

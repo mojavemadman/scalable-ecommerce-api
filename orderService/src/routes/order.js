@@ -11,5 +11,6 @@ orderRouter.put("/:id/shipping", OrderController.updateShipping);
 orderRouter.put("/:id/cancel", OrderController.cancelOrder);
 orderRouter.post("/:id/items", OrderController.addItem);
 orderRouter.get("/:id/items", OrderController.getOrderItems);
+orderRouter.post("/checkout", OrderController.checkout);
 
 export default orderRouter;

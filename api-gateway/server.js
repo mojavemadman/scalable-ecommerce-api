@@ -11,6 +11,7 @@ const PORT = process.env.PORT || 8080;
 const USER_SERVICE = process.env.USER_SERVICE_URL;
 const PRODUCT_SERVICE = process.env.PRODUCT_SERVICE_URL;
 const CART_SERVICE  = process.env.CART_SERVICE_URL;
+const ORDER_SERVICE = process.env.ORDER_SERVICE_URL;
 
 app.use(express.json());
 app.use(morgan("dev"));
@@ -112,6 +113,9 @@ app.post("/api/cart/items", authenticateGateway, (req, res) => proxyRequest(req,
 app.put("/api/cart/items", authenticateGateway, (req, res) => proxyRequest(req, res, CART_SERVICE));
 app.delete("/api/cart/items/:productId", authenticateGateway, (req, res) => proxyRequest(req, res, CART_SERVICE));
 app.delete("/api/cart", authenticateGateway, (req, res) => proxyRequest(req, res, CART_SERVICE));
+
+//Order Service - Authenticated routes (testing)
+app.post("/api/orders/checkout", authenticateGateway, (req, res) => proxyRequest(req, res, ORDER_SERVICE));
 
 //====================ADMIN ROUTES====================
 
