@@ -31,13 +31,23 @@ class OrderController {
 
     static async findOrderById(req, res) {
         try {
+            const userId = req.headers["x-user-id"];
             const order = await Orders.findOrderById(req.params.id);
 
             if (!order) {
                 return res.status(404).send({ error: "Order not found"});
             }
 
-            res.status(200).send(order);
+            if (order.userId !== parseInt(userId)) {
+                return res.status(403).send({ error: "Access not authorized" });
+            } 
+
+            const paymentResponse = await fetch(
+                `${process.env.PAYMENT_SERVICE_URL}/order/${id}`
+            );
+            const payment = paymentResponse.ok ? await paymentResponse.json() : null;
+
+            res.status(200).send({ order, payment });
         } catch (error) {
             console.error("Error retrieving order:", error);
             res.status(500).send({ error: error.message });
@@ -266,6 +276,9 @@ class OrderController {
     }
 
     //TODO: CREATE PAYMENT HELPER
+    static async processPayment() {
+        
+    }
 }
 
 export default OrderController;
