@@ -1,7 +1,6 @@
 import Payment from "../models/Payment.js";
 import Stripe from "stripe";
 import dotenv from "dotenv";
-import crypto from "crypto"
 
 dotenv.config();
 
@@ -11,13 +10,18 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 class PaymentController {
     static async createPayment(req, res) {
         try {
-            const idempotencyKey = crypto.randomUUID();
-            const {orderId, paymentMethod, totalAmount, billingInfo } = req.body;
+            const {orderId, idempotencyKey, paymentMethod, totalAmount, billingInfo } = req.body;
     
-            if (!orderId || !paymentMethod || !totalAmount || !billingInfo) {
+            if (!orderId || !idempotencyKey || !paymentMethod || !totalAmount || !billingInfo) {
                 return res.status(400).send({ error: "Missing required fields" });
             }
-    
+            
+            const existingPayment = await Payment.findByIdempotencyKey(idempotencyKey);
+            
+            if (existingPayment) {
+                console.log(`Idempotency check: returning existing payment ${existingPayment.id}`);
+                return res.status(200).send({ payment: existingPayment });
+            }
             const payment = await Payment.createPayment(
                 orderId, 
                 idempotencyKey, 
@@ -25,10 +29,6 @@ class PaymentController {
                 totalAmount, 
                 billingInfo
             );
-
-            if (payment.payment_status !== "pending") {
-                return res.status(200).send(payment);
-            }
         
             try {
                 const paymentIntent = await stripe.paymentIntents.create({
@@ -91,7 +91,7 @@ class PaymentController {
     static async getPaymentByOrderId(req, res) {
         try {
             const orderId = req.params.id;
-            const payment = await Payment.getPaymentById(orderId);
+            const payment = await Payment.getPaymentDetails(orderId);
     
             if (!payment) {
                 return res.status(404).send({ error: "Payment not found" });

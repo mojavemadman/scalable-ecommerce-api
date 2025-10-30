@@ -5,7 +5,7 @@ class OrderController {
         try {
             const { shippingInfo, totalAmount } = req.body;
             const userId = req.headers["x-user-id"];
-            
+
             const order = await Orders.createOrder(userId, shippingInfo, totalAmount);
             res.status(201).send(order);
         } catch (error) {
@@ -19,7 +19,7 @@ class OrderController {
             const orders = await Orders.findOrdersByUserId(req.headers["x-user-id"]);
 
             if (!orders || orders.length === 0) {
-                return res.status(404).send({ error: "Orders not found"})
+                return res.status(404).send({ error: "Orders not found" })
             }
 
             res.status(200).send(orders);
@@ -35,12 +35,12 @@ class OrderController {
             const order = await Orders.findOrderById(req.params.id);
 
             if (!order) {
-                return res.status(404).send({ error: "Order not found"});
+                return res.status(404).send({ error: "Order not found" });
             }
 
             if (order.userId !== parseInt(userId)) {
                 return res.status(403).send({ error: "Access not authorized" });
-            } 
+            }
 
             const paymentResponse = await fetch(
                 `${process.env.PAYMENT_SERVICE_URL}/order/${id}`
@@ -144,24 +144,25 @@ class OrderController {
 
             const cart = await OrderController.getCartItems(userId);
 
-            if(!cart || cart.length === 0) {
+            console.log("Cart fetched:", JSON.stringify(cart, null, 2));
+            console.log("Cart items count:", cart?.items.length);
+
+            if (!cart || !cart.items || cart.length === 0) {
                 return res.status(404).send({ error: "Cart not found" });
             }
 
-            const validatedItems = await OrderController.validateCartItems(cart.items);
-            const totalAmount = await OrderController.calculateTotal(validatedItems);
-            
             console.log(`Total amount: $${totalAmount.toFixed(2)}`);
 
             const order = await OrderController.createPendingOrder(userId, validatedItems, totalAmount);
-            const payment = await OrderController.processPayment(order.id, totalAmount, paymentInfo);
 
-            await OrderController.finalizeOrder(order.id, cart.items);
+            console.log(`Order created: ${order.id}`);
+            const payment = await OrderController.processPayment(order, paymentInfo);
 
+            await OrderController.finalizeOrder(userId, order.id, validatedItems, payment);
             res.status(201).json({ order, payment });
         } catch (error) {
             console.error("Checkout error:", error);
-            res.status(500).json({ error: error.message })
+            res.status(500).json({ error: error.message });
         }
     }
 
@@ -179,7 +180,7 @@ class OrderController {
                 }
                 throw new Error(`Cart service error: ${response.status}`)
             }
-            
+
             const data = await response.json();
             return data;
 
@@ -211,7 +212,7 @@ class OrderController {
                 if (product.inventory < item.quantity) {
                     throw new Error(
                         `Not enough stock for "${product.name}". ` +
-                        `Requested: ${item.quantity}; Available: ${product.inventory}` 
+                        `Requested: ${item.quantity}; Available: ${product.inventory}`
                     );
                 }
 
@@ -243,7 +244,7 @@ class OrderController {
                     "X-User-Id": userId
                 }
             });
-            
+
             if (!response.ok) {
                 throw new Error("User not found");
             }
@@ -262,7 +263,7 @@ class OrderController {
             if (!order) {
                 throw new Error("Error creating order");
             }
-            
+
             //3. Add validated items to order
             for (const item of validatedItems) {
                 await Orders.addItemToOrder(order.id, item.productId, item.quantity, item.price)
@@ -275,9 +276,80 @@ class OrderController {
         }
     }
 
-    //TODO: CREATE PAYMENT HELPER
-    static async processPayment() {
-        
+    static async processPayment(order, paymentInfo) {
+        try {
+            const idempotencyKey = `order_${order.id}`;
+            const response = await fetch(`${process.env.PAYMENT_SERVICE_URL}/payment`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    orderId: order.id,
+                    idempotencyKey: idempotencyKey,
+                    paymentMethod: paymentInfo.method,
+                    totalAmount: order.total_amount,
+                    billingInfo: paymentInfo.billingInfo
+                })
+            }
+            );
+
+            if (!response.ok) {
+                throw new Error("Error creating payment");
+            }
+
+            const { payment } = await response.json();
+            return payment;
+        } catch (error) {
+            console.error("Error processing payment");
+            throw error;
+        }
+    }
+
+    static async finalizeOrder(userId, orderId, validatedItems, payment) {
+        try {
+            if (payment.payment_status === "confirmed") {
+                //Decrease inventory
+                for (const item of validatedItems) {
+                    const response = await fetch(`${process.env.PRODUCT_SERVICE_URL}/products/inventory/${item.productId}`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            quantity: item.quantity
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Error decreasing inventory for ${item.name}`);
+                    }
+                }
+                //Update order status to "confirmed" and add payment_id
+                const updatedOrder = await Orders.updateOrderStatus(orderId, "confirmed", payment.id);
+
+                //Clear user's cart
+                const clearedCart = await fetch(`${process.env.CART_SERVICE_URL}/cart`, {
+                    method: "DELETE",
+                    headers: {
+                        "X-User-Id": userId
+                    }
+                });
+
+                if (!clearedCart.ok) {
+                    throw new Error("Error clearing cart after order completion");
+                }
+
+                return { success: true, paymentId: payment.id }
+
+            } else {
+                const updatedOrder = await Orders.updateOrderStatus(orderId, "failed", payment.id)
+                return { error: "Payment failed" }
+            }
+        } catch (error) {
+            console.error("Error finalizing order:", error);
+            throw error;
+        }
     }
 }
 

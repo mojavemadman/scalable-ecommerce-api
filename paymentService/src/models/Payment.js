@@ -44,8 +44,8 @@ class Payment {
         const query = `
             UPDATE payments
             SET 
-                payment_status = $2
-                stripe_transaction_id = COALESCE($3, stripe_transaction_id).
+                payment_status = $2,
+                stripe_transaction_id = COALESCE($3, stripe_transaction_id),
                 error_message = COALESCE($4, error_message),
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = $1

@@ -63,10 +63,6 @@ class Cart {
         
     }
     
-    /*
-    TBD:Is there ever a use case where we add multiple items at once?
-    If so, can we do that in one database query?
-    */
     static async updateItemQuantity(userId, productId, newQuantity) {
         const cartQuery = `SELECT id FROM carts WHERE user_id = $1`
         let cartResult = (await pool.query(cartQuery, [userId])).rows[0];
@@ -127,4 +123,4 @@ class Cart {
 
 }
 
-export default Cart
+export default Cart;

@@ -3,7 +3,7 @@ CREATE DATABASE orders_db;
 CREATE TABLE orders (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'shipped', 'delivered', 'cancelled')),
+    status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'shipped', 'delivered', 'cancelled', 'failed')),
     total_amount DECIMAL(10, 2) CHECK (total_amount >= 0) NOT NULL,
     shipping_street VARCHAR(255),
     shipping_city VARCHAR(100),

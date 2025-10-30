@@ -11,6 +11,7 @@ usersRouter.post("/login", UsersController.login);
 //=======AUTHENTICATED ROUTES=======
 usersRouter.delete("/", UsersController.deleteUser)
 usersRouter.get("/profile", UsersController.getProfile);
+usersRouter.put("/profile", UsersController.updateUser);
 
 //=======ADMIN ROUTES=======
 usersRouter.get("/", isAdmin, UsersController.getAllUsers);

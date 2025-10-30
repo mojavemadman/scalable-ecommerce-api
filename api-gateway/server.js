@@ -106,6 +106,7 @@ app.get("/api/products/:id", (req, res) => proxyRequest(req, res, PRODUCT_SERVIC
 app.get("/api/users/profile", authenticateGateway, (req, res) => proxyRequest(req, res, USER_SERVICE));
 app.delete("/api/users", authenticateGateway, (req, res) => proxyRequest(req, res, USER_SERVICE));
 app.get("/api/users", authenticateGateway, (req, res) => proxyRequest(req, res, USER_SERVICE)); // Admin only (service checks)
+app.put("/api/users/profile", authenticateGateway, (req, res) => proxyRequest(req, res, USER_SERVICE));
 
 // Cart Service - Authenticated routes
 app.get("/api/cart", authenticateGateway, (req, res) => proxyRequest(req, res, CART_SERVICE));
@@ -114,14 +115,13 @@ app.put("/api/cart/items", authenticateGateway, (req, res) => proxyRequest(req, 
 app.delete("/api/cart/items/:productId", authenticateGateway, (req, res) => proxyRequest(req, res, CART_SERVICE));
 app.delete("/api/cart", authenticateGateway, (req, res) => proxyRequest(req, res, CART_SERVICE));
 
-//Order Service - Authenticated routes (testing)
+//Order Service - Authenticated routes
 app.post("/api/orders/checkout", authenticateGateway, (req, res) => proxyRequest(req, res, ORDER_SERVICE));
 
 //====================ADMIN ROUTES====================
 
 //Product Service - Admin Routes
 app.post("/api/products", (req, res) => proxyRequest(req, res, PRODUCT_SERVICE));
-app.put("/api/products/:id", (req, res) => proxyRequest(req, res, PRODUCT_SERVICE));
 app.delete("/api/products/:id", (req, res) => proxyRequest(req, res, PRODUCT_SERVICE));
 
 

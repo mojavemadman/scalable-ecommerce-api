@@ -30,7 +30,6 @@ static async findOrdersByUserId(userId) {
             orders.shipping_city,
             orders.shipping_state,
             orders.shipping_zip,
-            orders.payment_id,
             orders.created_at as order_created_at,
             orders.updated_at,
             order_items.id as item_id,
@@ -61,7 +60,6 @@ static async findOrdersByUserId(userId) {
                     state: row.shipping_state,
                     zip: row.shipping_zip
                 },
-                paymentId: row.payment_id,
                 createdAt: row.order_created_at,
                 updatedAt: row.updated_at,
                 items: []
@@ -92,7 +90,6 @@ static async findOrdersByUserId(userId) {
                 orders.shipping_city,
                 orders.shipping_state,
                 orders.shipping_zip,
-                orders.payment_id,
                 orders.created_at as order_created_at,
                 orders.updated_at,
                 order_items.id as item_id,
@@ -118,7 +115,6 @@ static async findOrdersByUserId(userId) {
                 state: rows.shipping_street,
                 zip: rows.shipping_zip
             },
-            paymentId: rows.payment_id,
             createdAt: rows.created_at,
             updatedAt: rows.updated_at,
             items: result.rows
@@ -134,14 +130,14 @@ static async findOrdersByUserId(userId) {
         return order;
     }
 
-    static async updateOrderStatus(orderId, newStatus) {
+    static async updateOrderStatus(orderId, newStatus, paymentId) {
         const query = `
             UPDATE orders
-            SET status = $2
+            SET status = $2, payment_id = COALESCE($3, payment_id)
             WHERE id = $1
             RETURNING *
         `;
-        const result = await pool.query(query, [orderId, newStatus]);
+        const result = await pool.query(query, [orderId, newStatus, paymentId]);
         return result.rows[0];
     }
 

@@ -44,9 +44,9 @@ class ProductController {
 	}
 
     static async findByActive(req, res) {
-        const status = req.query.status
+        const status = req.query.active;
         try {
-            
+            if (status === true || status === "true") {
             const products = await Product.findByActive(status);
 
             if (!products) {
@@ -54,6 +54,9 @@ class ProductController {
             }
 
             res.status(200).send(products);
+        } else {
+            res.status(403).send({ error: "Not authorized" })
+        }
         } catch (error) {
             console.error("Error retrieving products:", error);
             res.status(400).send({ error: error.message })
@@ -105,9 +108,26 @@ class ProductController {
             res.status(200).send(updatedProduct);
         } catch (error) {
             console.error("Error updating product:", error);
-            res.status(400).send({ error: error.message })
+            res.status(400).send({ error: error.message });
+        }
+    }
+
+    static async decreaseInventory(req, res) {
+        try {
+            const productId = req.params.productId;
+            const { quantity } = req.body;
+            const updatedProduct = await Product.decreaseInventory(productId, quantity);
+
+            if (!updatedProduct) {
+                return res.status(404).send({ error: "Product not found" });
+            }
+
+            res.status(200).send(updatedProduct);
+        } catch (error) {
+            console.error("Error updating product:", error);
+            res.status(500).send({ error: error.message });
         }
     }
 }
 
-export default ProductController
+export default ProductController;

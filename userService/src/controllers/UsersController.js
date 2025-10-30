@@ -116,6 +116,24 @@ class UsersController {
             res.status(500).send({ error: error.message })
         }
     }
+
+    static async updateUser(req, res) {
+        try {
+            const userId = req.headers["x-user-id"];
+            const { updates } = req.body;
+
+            const updatedUser = await Users.update(userId, updates);
+
+            if (!updatedUser) {
+                return res.status(404).send({ error: "User not found" })
+            }
+
+            res.status(200).send(updatedUser);
+        } catch (error) {
+            console.error("Error updating user:", error);
+            res.status(500).send({ error: error.message });
+        }
+    }
 }
 
 export default UsersController;
