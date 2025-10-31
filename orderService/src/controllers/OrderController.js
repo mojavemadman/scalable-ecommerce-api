@@ -32,16 +32,14 @@ class OrderController {
     static async findOrderById(req, res) {
         try {
             const userId = req.headers["x-user-id"];
-            const order = await Orders.findOrderById(req.params.id);
+            const orderId = req.params.id;
 
-            if (!order) {
-                return res.status(404).send({ error: "Order not found" });
+            const verification = await OrderController.verifyOrderOwnership(orderId, userId);
+            if (!verification.authorized) {
+                return res.status(verification.status).send(({ error: verification.error }))
             }
 
-            if (order.userId !== parseInt(userId)) {
-                return res.status(403).send({ error: "Access not authorized" });
-            }
-
+            const order = verification.order;
             const paymentResponse = await fetch(
                 `${process.env.PAYMENT_SERVICE_URL}/order/${id}`
             );
@@ -73,8 +71,16 @@ class OrderController {
 
     static async updateShipping(req, res) {
         try {
+            const userId = req.headers["x-user-id"];
             const orderId = req.params.id;
             const { shippingInfo } = req.body;
+
+            const verification = await OrderController.verifyOrderOwnership(req.params.id, userId);
+            
+            if (!verification.authorized) {
+                return res.status(verification.status).send({ error: verification.error});
+            }
+
             const updatedOrder = await Orders.updateShippingInfo(orderId, shippingInfo);
 
             if (!updatedOrder) {
@@ -90,7 +96,15 @@ class OrderController {
 
     static async cancelOrder(req, res) {
         try {
+            const userId = req.headers["x-user-id"];
             const orderId = req.params.id;
+
+            const verification = await OrderController.verifyOrderOwnership(userId, orderId);
+
+            if (!verification.authorized) {
+                return res.status(verification.status).send({ error: verification.error });
+            }
+            
             const cancelledOrder = await Orders.cancelOrder(orderId);
 
             if (!cancelledOrder) {
@@ -123,7 +137,15 @@ class OrderController {
 
     static async getOrderItems(req, res) {
         try {
-            const orderItems = await Orders.getOrderItems(req.params.id);
+            const userId = req.headers["x-user-id"];
+            const orderId = req.params.id;
+            const verification = await OrderController.verifyOrderOwnership(orderId, userId);
+            
+            if (!verification.authorized) {
+                return res.status(verification.status).send(({ error: verification.error }))
+            }
+
+            const orderItems = await Orders.getOrderItems(orderId);
 
             if (orderItems.length === 0) {
                 return res.status(404).send({ error: "Items not found" });
@@ -350,6 +372,20 @@ class OrderController {
             console.error("Error finalizing order:", error);
             throw error;
         }
+    }
+
+    static async verifyOrderOwnership(orderId, userId) {
+        const order = await Orders.findOrderById(orderId)
+
+        if (!order) {
+            return { authorized: false, error: "Order not found", status: 404 };
+        }
+
+        if (order.userId !== parseInt(userId)) {
+            return { authorized: false, error: "Access not authorized", status: 403 };
+        }
+
+        return { authorized: true, order };
     }
 }
 
