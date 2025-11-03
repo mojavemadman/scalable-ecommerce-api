@@ -9,6 +9,8 @@ app.use(express.json());
 app.use(morgan("dev"));
 app.use("/users", usersRouter);
 
+export default app;
+
 const testConnection = async () => {
 	let client;
     try {
@@ -37,4 +39,6 @@ const startServer = async () => {
 	});
 };
 
-startServer();
+if (process.env.NODE_ENV !== "test") {
+	startServer();
+}

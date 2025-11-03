@@ -6,6 +6,11 @@ class UsersController {
 	static async createUser(req, res) {
 		try {
 			const { email, password, firstName, lastName } = req.body;
+
+            if (!email || !password || !firstName || !lastName) {
+                return res.status(400).send({ error: "Missing required fields" });
+            }
+
 			const newUser = await Users.createUser(
 				email,
 				password,
@@ -16,6 +21,9 @@ class UsersController {
 			res.status(201).send(newUser);
 		} catch (error) {
 			console.error("Error creating user:", error);
+            if (error.code === "23505") {
+                return res.status(409).send({ error: "Email already exists" });
+            }
 			res.status(500).send({ error: "Internal server error" });
 		}
 	}

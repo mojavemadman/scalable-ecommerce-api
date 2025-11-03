@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken"
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT
 
 const USER_SERVICE = process.env.USER_SERVICE_URL;
 const PRODUCT_SERVICE = process.env.PRODUCT_SERVICE_URL;

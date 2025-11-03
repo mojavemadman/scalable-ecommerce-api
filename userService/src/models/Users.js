@@ -27,10 +27,10 @@ class Users {
         return result.rows[0];
     }
 
-    static async createUser(email, password, firstName, lastName) {
+    static async createUser(email, password, firstName, lastName, shippingStreet = null, shippingCity = null, shippingState = null, shippingZip = null) {
         const query = `
-            INSERT INTO users (email, password, first_name, last_name)
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO users (email, password, first_name, last_name, shipping_street, shipping_city, shipping_state, shipping_zip)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING *
             `;
         const hashedPassword = await bcrypt.hash(password, 10)
@@ -38,7 +38,11 @@ class Users {
             email,
             hashedPassword,
             firstName,
-            lastName
+            lastName,
+            shippingStreet,
+            shippingCity,
+            shippingState,
+            shippingZip
         ]);
         return result.rows[0];
     }
