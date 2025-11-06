@@ -162,6 +162,7 @@ class OrderController {
     static async checkout(req, res) {
         try {
             const userId = req.headers["x-user-id"];
+            const userEmail = req.headers["x-user-email"];
             const { paymentInfo } = req.body;
 
             const cart = await OrderController.getCartItems(userId);
@@ -180,7 +181,7 @@ class OrderController {
             console.log(`Order created: ${order.id}`);
             const payment = await OrderController.processPayment(order, paymentInfo);
 
-            await OrderController.finalizeOrder(userId, order.id, validatedItems, payment);
+            await OrderController.finalizeOrder(userId, userEmail, order.id, validatedItems, payment);
             res.status(201).json({ order, payment });
         } catch (error) {
             console.error("Checkout error:", error);
@@ -328,7 +329,7 @@ class OrderController {
         }
     }
 
-    static async finalizeOrder(userId, orderId, validatedItems, payment) {
+    static async finalizeOrder(userId, userEmail, orderId, validatedItems, payment) {
         try {
             if (payment.payment_status === "confirmed") {
                 //Decrease inventory
@@ -361,6 +362,25 @@ class OrderController {
                 if (!clearedCart.ok) {
                     throw new Error("Error clearing cart after order completion");
                 }
+
+                fetch(`${process.env.NOTIFICATION_SERVICE_URL}/notifications`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        orderId: updatedOrder.id,
+                        userEmail: userEmail,
+                        orderDetails: {
+                            totalAmount: updatedOrder.total_amount,
+                            status: updatedOrder.status,
+                            items: validatedItems
+                        }
+                    })
+                }).catch(err => {
+                    //Allow notification service to fail without preventing checkout
+                    console.error("Failed to send notification", err);
+                })
 
                 return { success: true, paymentId: payment.id }
 

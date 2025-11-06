@@ -5,12 +5,13 @@ const orderRouter = Router();
 
 orderRouter.post("/", OrderController.createOrder);
 orderRouter.get("/", OrderController.findOrdersByUser);
+orderRouter.get("/health", (req, res) => res.status(200).send({ status: "Order service is running" }));
+orderRouter.post("/checkout", OrderController.checkout);
 orderRouter.get("/:id", OrderController.findOrderById);
 orderRouter.put("/:id/status", OrderController.updateOrderStatus);
 orderRouter.put("/:id/shipping", OrderController.updateShipping);
 orderRouter.put("/:id/cancel", OrderController.cancelOrder);
 orderRouter.post("/:id/items", OrderController.addItem);
 orderRouter.get("/:id/items", OrderController.getOrderItems);
-orderRouter.post("/checkout", OrderController.checkout);
 
 export default orderRouter;

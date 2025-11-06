@@ -7,6 +7,7 @@ const usersRouter = Router();
 //=======PUBLIC ROUTES=======
 usersRouter.post("/", UsersController.createUser);
 usersRouter.post("/login", UsersController.login);
+usersRouter.get("/health", (req, res) => res.status(200).send({ status: "User service is running" }));
 
 //=======AUTHENTICATED ROUTES=======
 usersRouter.delete("/", UsersController.deleteUser)

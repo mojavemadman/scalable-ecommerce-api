@@ -7,6 +7,7 @@ const productRouter = Router();
 productRouter.post("/", ProductController.create);
 productRouter.get("/", ProductController.findAll);
 productRouter.get("/active", ProductController.findByActive);
+productRouter.get("/heath", (req, res) => res.status(200).send({ status: "Product service is running" }));
 productRouter.get("/categories/:id", ProductController.findByCategory);
 productRouter.put("/inventory/:productId", ProductController.decreaseInventory);
 productRouter.get("/:id", ProductController.findById);
