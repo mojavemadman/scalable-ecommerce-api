@@ -25,6 +25,7 @@ This project was built to deeply understand microservices architecture, from des
 - **Cart Service**: Stores and manages items in user's cart for checkout and modifying quantities of items
 - **Order Service**: Handles checkout and orders, including creating new orders upon checkout, and viewing past orders
 - **Payment Service**: Handles payment processing through `Stripe` integration
+- **Payment Service**: Utilizes `nodemailer` to send order confirmations
 
 ## Architecture
 - **Microservices Architecture**: Each service has its own independent source code and database

@@ -33,7 +33,7 @@ const startServer = async () => {
 	}
 
 	app.listen(3004, async () => {
-		console.log("Product server running on http://localhost:3004");
+		console.log("Payment server running on http://localhost:3004");
 	});
 };
 

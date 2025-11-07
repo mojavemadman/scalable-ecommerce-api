@@ -1,3 +1,5 @@
+import EmailService from "../services/emailService.js";
+
 class NotificationController {
     //Send order confirmation notification
     static async sendOrderConfirmation(req, res) {
@@ -12,15 +14,9 @@ class NotificationController {
             console.log("\n======ORDER CONFIRMATION======");
             console.log(`To: ${userEmail}`);
             console.log(`Order ID: ${orderId}`);
-            console.log(`Total Amount: ${orderDetails.totalAmount}`);
-            console.log(`Status: ${orderDetails.status}`);
-            console.log("Items:");
-            orderDetails.items?.forEach(item => {
-                console.log(`  -${item.name} x${item.quantity} @ ${item.price}`);
-            });
             console.log("==============================\n");
 
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await EmailService.sendOrderConfirmation(userEmail, orderId, orderDetails);
 
             return res.status(200).send({
                 success: true,
@@ -34,7 +30,11 @@ class NotificationController {
     }
 
     static async healthCheck(req, res) {
-        return res.status(200).send({ status: "Notification service is running" });
+        const emailReady = await EmailService.verifyConnection();
+        return res.status(200).send({ 
+            status: "Notification service is running",
+            emailService: emailReady ? "connected" : "disconnected"
+        });
     }
 }
 
