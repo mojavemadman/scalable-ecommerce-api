@@ -116,6 +116,11 @@ app.delete("/api/cart/items/:productId", authenticateGateway, (req, res) => prox
 app.delete("/api/cart", authenticateGateway, (req, res) => proxyRequest(req, res, CART_SERVICE));
 
 //Order Service - Authenticated routes
+app.get("/api/orders", authenticateGateway, (req, res) => proxyRequest(req, res, ORDER_SERVICE));
+app.get("/api/orders/:id", authenticateGateway, (req, res) => proxyRequest(req, res, ORDER_SERVICE));
+app.put("/api/orders/:id/shipping", authenticateGateway, (req, res) => proxyRequest(req, res, ORDER_SERVICE));
+app.get("/api/orders/:id/items", authenticateGateway, (req, res) => proxyRequest(req, res, ORDER_SERVICE));
+app.delete("/api/orders/:id/cancel", authenticateGateway, (req, res) => proxyRequest(req, res, ORDER_SERVICE));
 app.post("/api/orders/checkout", authenticateGateway, (req, res) => proxyRequest(req, res, ORDER_SERVICE));
 
 //====================ADMIN ROUTES====================
@@ -153,5 +158,6 @@ app.listen(PORT, () => {
     console.log("Routing to:");
     console.log(`  User Service: ${USER_SERVICE}`);
     console.log(`  Product Service: ${PRODUCT_SERVICE}`);
+    console.log(`  Order Service: ${ORDER_SERVICE}`);
     console.log(`  Cart Service: ${CART_SERVICE}`);
 })

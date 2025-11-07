@@ -173,7 +173,8 @@ class OrderController {
             if (!cart || !cart.items || cart.length === 0) {
                 return res.status(404).send({ error: "Cart not found" });
             }
-
+            const validatedItems = await OrderController.validateCartItems(cart.items);
+            const totalAmount = await OrderController.calculateTotal(validatedItems);
             console.log(`Total amount: $${totalAmount.toFixed(2)}`);
 
             const order = await OrderController.createPendingOrder(userId, validatedItems, totalAmount);
@@ -181,8 +182,8 @@ class OrderController {
             console.log(`Order created: ${order.id}`);
             const payment = await OrderController.processPayment(order, paymentInfo);
 
-            await OrderController.finalizeOrder(userId, userEmail, order.id, validatedItems, payment);
-            res.status(201).json({ order, payment });
+            const result = await OrderController.finalizeOrder(userId, userEmail, order, validatedItems, payment);
+            res.status(201).json({ order: result.order , payment });
         } catch (error) {
             console.error("Checkout error:", error);
             res.status(500).json({ error: error.message });
@@ -329,7 +330,7 @@ class OrderController {
         }
     }
 
-    static async finalizeOrder(userId, userEmail, orderId, validatedItems, payment) {
+    static async finalizeOrder(userId, userEmail, order, validatedItems, payment) {
         try {
             if (payment.payment_status === "confirmed") {
                 //Decrease inventory
@@ -349,8 +350,8 @@ class OrderController {
                     }
                 }
                 //Update order status to "confirmed" and add payment_id
-                const updatedOrder = await Orders.updateOrderStatus(orderId, "confirmed", payment.id);
-
+                order = await Orders.updateOrderStatus(order.id, "confirmed", payment.id);
+                console.log("Finalizing order; updated order:", order);
                 //Clear user's cart
                 const clearedCart = await fetch(`${process.env.CART_SERVICE_URL}/cart`, {
                     method: "DELETE",
@@ -363,17 +364,17 @@ class OrderController {
                     throw new Error("Error clearing cart after order completion");
                 }
 
-                fetch(`${process.env.NOTIFICATION_SERVICE_URL}/notifications`, {
+                fetch(`${process.env.NOTIFICATION_SERVICE_URL}/notifications/order-confirmation`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        orderId: updatedOrder.id,
+                        orderId: order.id,
                         userEmail: userEmail,
                         orderDetails: {
-                            totalAmount: updatedOrder.total_amount,
-                            status: updatedOrder.status,
+                            totalAmount: order.total_amount,
+                            status: order.status,
                             items: validatedItems
                         }
                     })
@@ -382,10 +383,10 @@ class OrderController {
                     console.error("Failed to send notification", err);
                 })
 
-                return { success: true, paymentId: payment.id }
+                return { success: true, paymentId: payment.id, order: order };
 
             } else {
-                const updatedOrder = await Orders.updateOrderStatus(orderId, "failed", payment.id)
+                order = await Orders.updateOrderStatus(order.id, "failed", payment.id)
                 return { error: "Payment failed" }
             }
         } catch (error) {
