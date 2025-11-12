@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node app.js",
+    "dev": "nodemon app.js",
     "test": "cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
     "test:watch": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watch",
     "test:coverage": "cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --coverage"
@@ -15,11 +16,11 @@
   "description": "",
   "dependencies": {
     "bcrypt": "^6.0.0",
-    "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.1",
+    "nodemon": "^3.1.10",
     "pg": "^8.16.3"
   },
   "devDependencies": {
