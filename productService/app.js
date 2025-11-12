@@ -9,6 +9,8 @@ app.use(morgan("dev"));
 app.use(express.json());
 app.use("/products", productRouter);
 
+const PORT = process.env.PORT;
+
 const testConnect = async () => {
 	let client;
 	try {
@@ -32,8 +34,8 @@ const startServer = async () => {
 		process.exit(1);
 	}
 
-	app.listen(3001, async () => {
-		console.log("Product server running on http://localhost:3001");
+	app.listen(PORT, async () => {
+		console.log(`Product server running on http://localhost:${PORT}`);
 	});
 };
 

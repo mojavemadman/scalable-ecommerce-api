@@ -12,7 +12,7 @@ app.use(morgan("dev"));
 
 app.use("/notifications", notificationRoutes);
 
-const PORT = process.env.PORT
+const PORT = process.env.PORT;
 
 if (process.env.NODE_ENV !== "test") {
     app.listen(PORT, () => {

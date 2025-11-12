@@ -2,12 +2,17 @@ import express from "express";
 import morgan from "morgan";
 import pool from "./src/db/db.js";
 import cartRouter from "./src/routes/cart.js";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
 
 app.use(morgan("dev"));
 app.use(express.json());
 app.use("/cart", cartRouter);
+
+const PORT = process.env.PORT
 
 const testConnect = async () => {
 	let client;
@@ -32,8 +37,8 @@ const startServer = async () => {
 		process.exit(1);
 	}
 
-	app.listen(3003, async () => {
-		console.log("Product server running on http://localhost:3001");
+	app.listen(PORT, async () => {
+		console.log(`Product server running on http://localhost:${PORT}`);
 	});
 };
 
