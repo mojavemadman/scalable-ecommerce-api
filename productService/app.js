@@ -2,6 +2,9 @@ import express from "express";
 import morgan from "morgan";
 import pool from "./src/db/db.js";
 import productRouter from "./src/routes/product.js";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
 

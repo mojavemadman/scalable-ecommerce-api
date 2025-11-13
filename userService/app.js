@@ -2,12 +2,17 @@ import express from "express";
 import morgan from "morgan";
 import pool from "./src/db/db.js";
 import usersRouter from "./src/routes/user.js";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
 
 app.use(express.json());
 app.use(morgan("dev"));
 app.use("/users", usersRouter);
+
+const PORT = process.env.PORT;
 
 export default app;
 
@@ -34,8 +39,8 @@ const startServer = async () => {
 		process.exit(1);
 	}
 
-	app.listen(3000, async () => {
-		console.log("User server running on http://localhost:3000");
+	app.listen(PORT, async () => {
+		console.log(`User server running on http://localhost:${PORT}`);
 	});
 };
 

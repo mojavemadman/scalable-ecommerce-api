@@ -2,6 +2,9 @@ import express from "express";
 import morgan from "morgan";
 import pool from "./src/db/db.js";
 import paymentRouter from "./src/routes/payment.js";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
 
