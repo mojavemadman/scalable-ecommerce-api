@@ -1,4 +1,4 @@
-CREATE DATABASE products_db;
+-- CREATE DATABASE products_db;
 
 CREATE TABLE products (
     id SERIAL PRIMARY KEY,

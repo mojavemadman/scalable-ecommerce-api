@@ -1,4 +1,4 @@
-CREATE DATABASE users_db;
+-- CREATE DATABASE users_db;
 
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,

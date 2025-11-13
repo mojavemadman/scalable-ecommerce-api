@@ -1,4 +1,4 @@
-CREATE DATABASE orders_db;
+-- CREATE DATABASE orders_db;
 
 CREATE TABLE orders (
     id SERIAL PRIMARY KEY,
