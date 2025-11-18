@@ -1,0 +1,55 @@
+services:
+  user-service:
+    volumes:
+      - ./userService:/app
+      - /app/node_modules
+    command: npm run dev
+    environment:
+      NODE_ENV: development
+  
+  product-service:
+    volumes:
+      - ./productService:/app
+      - /app/node_modules
+    command: npm run dev
+    environment:
+      NODE_ENV: development
+
+  order-service:
+    volumes:
+      - ./orderService:/app
+      - /app/node_modules
+    command: npm run dev
+    environment:
+      NODE_ENV: development
+  cart-service:
+    volumes:
+      - ./cartService:/app
+      - /app/node_modules
+    command: npm run dev
+    environment:
+      NODE_ENV: development
+
+  payment-service:
+    volumes:
+      - ./paymentService:/app
+      - /app/node_modules
+    command: npm run dev
+    environment:
+      NODE_ENV: development
+
+  notification-service:
+    volumes:
+      - ./notificationService:/app
+      - /app/node_modules
+    command: npm run dev
+    environment:
+      NODE_ENV: development
+
+  api-gateway:
+    volumes:
+      - ./api-gateway:/app
+      - /app/node_modules
+    command: npm run dev
+    environment:
+      NODE_ENV: development
